@@ -26,21 +26,26 @@ class FingeringStateGenerator(object):
 
             for prevFS in self.prevFSs:
 
+                availableFingers = [1, 2, 3, 4, 5]
+                for f in prevFS.fingers:
+                    availableFingers.remove(f)
+                if self.prevSS is None:
+                    prevPitches = []
+                else:
+                    prevPitches = self.prevSS.getPitches()
+                for prevP in prevPitches:
+                    if prevP in pitches:
+                        assert prevFS.getFingerByPitch(prevP) not in availableFingers
+                        availableFingers.append(prevFS.getFingerByPitch(prevP))
+                availableFingers.sort()
+
                 # Currently, we don't support the case of crossed fingers in an assignment for a
                 # single score state, and thus all candidate assignments generated are in finger
                 # order. (We of course support the case of crossed fingers from one score state
                 # to the next.
-                assignments = list(combinations([1, 2, 3, 4, 5], len(pitches)))
+                assignments = list(combinations(availableFingers, len(pitches)))
 
-                toRemove = []
-                for p in heldPitches:
-                    for a in assignments:
-                        fingerAssignedToHeldPitch = a[pitches.index(p)]
-                        fingerThatPressedHeldPitch = prevFS.getFingerByPitch(p)
-                        if (fingerAssignedToHeldPitch != fingerThatPressedHeldPitch):
-                            toRemove.append(a)
-                for a in toRemove:
-                    assignments.remove(a)
+                self.removeInvalidAssignmentsToHeldPitches(assignments, pitches, heldPitches, prevFS)
 
                 for a in assignments:
 
@@ -66,6 +71,17 @@ class FingeringStateGenerator(object):
 
         return self.allFSs
 
+    def removeInvalidAssignmentsToHeldPitches(self, assignments, pitches, heldPitches, prevFS):
+        toRemove = []
+        for p in heldPitches:
+            for a in assignments:
+                fingerAssignedToHeldPitch = a[pitches.index(p)]
+                fingerThatPressedHeldPitch = prevFS.getFingerByPitch(p)
+                if (fingerAssignedToHeldPitch != fingerThatPressedHeldPitch):
+                    toRemove.append(a)
+        for a in toRemove:
+            assignments.remove(a)
+
     def getVertCost(self, pitches, assignment):
 
         assert len(pitches) == len(assignment)
@@ -84,3 +100,8 @@ class FingeringStateGenerator(object):
             totalCost += pairCost
 
         return totalCost
+
+    def getHorizCost(self, pitches1, assignment1, pitches2, assignment2):
+
+        assert len(pitches1) == len(assignment1)
+        assert len(pitches2) == len(assignment2)
