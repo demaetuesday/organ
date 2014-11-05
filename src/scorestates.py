@@ -1,7 +1,5 @@
 from music21 import stream, note
-
-from src.model import *
-
+from model import *
 
 class ScoreStateGenerator(object):
 

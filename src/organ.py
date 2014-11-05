@@ -1,9 +1,8 @@
 from os.path import expanduser
 from music21 import converter
 from scorestates import *
-from src.fingeringstates import *
+from fingeringstates import *
 from output import *
-
 
 score = converter.parse('scores/amfiog.xml')
 #score = converter.parse('scores/rest_test.xml')

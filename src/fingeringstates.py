@@ -1,8 +1,6 @@
 from itertools import combinations
-
-from src.model import *
+from model import *
 from parameters import *
-
 
 class FingeringStateGenerator(object):
 
