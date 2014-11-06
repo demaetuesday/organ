@@ -1,4 +1,5 @@
 from itertools import combinations
+from collections import defaultdict
 from model import *
 from parameters import *
 
@@ -89,7 +90,7 @@ class FingeringStateGenerator(object):
         if len(pitches) == 1:
             return 0
 
-        # Totals up the costs for adjacent pairs in the assignment
+        # Totals up the costs of pairs consisting of neighboring elements in the set of pitches.
         totalCost = 0.0
         for i in range(0, len(pitches) - 1):
             span = pitches[i + 1] - pitches[i]
@@ -101,7 +102,72 @@ class FingeringStateGenerator(object):
 
         return totalCost
 
-    def getHorizCost(self, pitches1, assignment1, pitches2, assignment2):
+    def getHorizCost(self, prevPitches, prevAssignment, currPitches, currAssignment):
 
-        assert len(pitches1) == len(assignment1)
-        assert len(pitches2) == len(assignment2)
+        assert len(prevPitches) == len(prevAssignment)
+        assert len(currPitches) == len(currAssignment)
+
+        prevPitchPairs = list(combinations(prevPitches, 2))
+        currPitchPairs = list(combinations(currPitches, 2))
+
+        # Finds the set of horizontal pitch pairs, which is the set of pitch pairs that have one
+        # pitch from the previous SS and one pitch from the current SS, and that are not already
+        # present as a pair in the pitches from the previous SS alone or in the pitches from the
+        # current score state alone.
+        allPitches = sorted(list(set(prevPitches + currPitches)))
+        horizPitchPairs = list(combinations(allPitches, 2))
+        toRemove = []
+        for pair in horizPitchPairs:
+            if pair in prevPitchPairs or pair in currPitchPairs:
+                toRemove.append(pair)
+        for pair in toRemove:
+            horizPitchPairs.remove(pair)
+
+        print horizPitchPairs
+
+        membersOfHorizPitchPairs = []
+        for pair in horizPitchPairs:
+            for m in pair:
+                membersOfHorizPitchPairs.append(m)
+        membersOfHorizPitchPairs = sorted(list(set(membersOfHorizPitchPairs)))
+
+        print membersOfHorizPitchPairs
+
+        totalCost = 0.0
+        for i in range(0, len(membersOfHorizPitchPairs) - 1):
+
+            print (membersOfHorizPitchPairs[i], membersOfHorizPitchPairs[i + 1])
+
+            span = membersOfHorizPitchPairs[i + 1] - membersOfHorizPitchPairs[i]
+            assert span > 0
+
+            mI = membersOfHorizPitchPairs[i]
+            if mI in prevPitches:
+                assert mI not in currPitches
+                fingerA = prevAssignment[prevPitches.index(mI)]
+            elif mI in currPitches:
+                assert mI not in prevPitches
+                fingerA = currAssignment[currPitches.index(mI)]
+
+            mIPlus1 = membersOfHorizPitchPairs[i + 1]
+            if mIPlus1 in prevPitches:
+                assert mIPlus1 not in currPitches
+                fingerB = prevAssignment[prevPitches.index(mIPlus1)]
+            elif mIPlus1 in currPitches:
+                assert mIPlus1 not in prevPitches
+                fingerB = currAssignment[currPitches.index(mIPlus1)]
+
+            if fingerA > fingerB:
+                assignment = (fingerB, fingerA)
+                span *= -1
+            else:
+                assignment = (fingerA, fingerB)
+
+            if span not in pairSpanCost[assignment]:
+                pairCost = float('inf')
+            else:
+                pairCost = pairSpanCost[assignment][span]
+
+            totalCost += pairCost
+
+        return totalCost
