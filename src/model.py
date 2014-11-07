@@ -60,7 +60,7 @@ class FingeringState(object):
         if self.scoreState is not None:
             scoreStateString = self.scoreState.toString()
 
-        result = 'ID: ' + str(self.id) + '\n'
+        result = 'FS: ' + str(self.id) + '\n'
         result += scoreStateString + '\n'
         result += str(self.fingers) + '\n'
         result += 'Vertical cost: ' + str(self.vertCost)

@@ -28,10 +28,6 @@ class ScoreStateGenerator(object):
             # Currently, assumes that notes in RHNotes are ordered with
             # monotonically increasing noteTime values.
 
-            # Makeshift mechanism to select only the first n beats
-            #if self.getNoteTime(n, barDuration) == 4:
-                #break
-
             if (self.measureLimit is not None and
                 self.getNoteTime(n, barDuration) >= self.measureLimit * barDuration + 1):
 

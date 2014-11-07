@@ -4,11 +4,12 @@ def toDotGraph(fingeringStates, filename):
     result += 'rankdir=LR ranksep=2.0\n'
 
     for fs in fingeringStates:
-        for childFS in fs.children:
+        for child in fs.children:
 
             result += getNodeNameString(fs)
             result += " -> "
-            result += getNodeNameString(childFS)
+            result += getNodeNameString(child[0])
+            result += ' [label="' + "{0:.2f}".format(child[1]) + '"]'
             result += ";\n"
 
     result += "}\n"

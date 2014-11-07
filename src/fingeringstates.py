@@ -50,8 +50,17 @@ class FingeringStateGenerator(object):
 
                 for a in assignments:
 
+                    if prevFS.scoreState is None:
+                        horizCost = 0.0
+                    else:
+                        horizCost = self.getHorizCost(prevFS.scoreState.getPitches(), prevFS.fingers,
+                                                      pitches, a)
+                    if horizCost ==  float('inf'):
+                        continue
+
                     if a in usedAssignmentsMapToFS:
                         fs = usedAssignmentsMapToFS[a]
+                        child = (fs, horizCost)
                     else:
                         vertCost = self.getVertCost(pitches, a)
 
@@ -59,16 +68,23 @@ class FingeringStateGenerator(object):
                             continue
 
                         fs = FingeringState(self.currentSS, a, vertCost)
+                        child = (fs, horizCost)
+
                         usedAssignmentsMapToFS[a] = fs
                         fingeringStatesForCurrentSS.append(fs)
                         self.allFSs.append(fs)
 
-                    prevFS.children.append(fs)
+                    prevFS.children.append(child)
 
             self.prevFSs = fingeringStatesForCurrentSS
 
             self.prevSS = self.currentSS
             self.currentSS = self.currentSS.next
+
+        goalFS = FingeringState(None, (), 0)
+        for prevFS in self.prevFSs:
+            prevFS.children.append((goalFS, 0))
+        self.allFSs.append(goalFS)
 
         return self.allFSs
 
@@ -123,7 +139,7 @@ class FingeringStateGenerator(object):
         for pair in toRemove:
             horizPitchPairs.remove(pair)
 
-        print horizPitchPairs
+        #print horizPitchPairs
 
         membersOfHorizPitchPairs = []
         for pair in horizPitchPairs:
@@ -131,12 +147,12 @@ class FingeringStateGenerator(object):
                 membersOfHorizPitchPairs.append(m)
         membersOfHorizPitchPairs = sorted(list(set(membersOfHorizPitchPairs)))
 
-        print membersOfHorizPitchPairs
+        #print membersOfHorizPitchPairs
 
         totalCost = 0.0
         for i in range(0, len(membersOfHorizPitchPairs) - 1):
 
-            print (membersOfHorizPitchPairs[i], membersOfHorizPitchPairs[i + 1])
+            #print (membersOfHorizPitchPairs[i], membersOfHorizPitchPairs[i + 1])
 
             span = membersOfHorizPitchPairs[i + 1] - membersOfHorizPitchPairs[i]
             assert span > 0
@@ -170,4 +186,4 @@ class FingeringStateGenerator(object):
 
             totalCost += pairCost
 
-        return totalCost
+        return totalCost / (len(membersOfHorizPitchPairs) - 1)
