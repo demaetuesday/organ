@@ -1,3 +1,5 @@
+# From http://www.chuntaolu.com/blog/algo-week-5-heap-and-dijkstra-s-shortest-path
+
 import heapq
 
 class PriorityQueue(object):
