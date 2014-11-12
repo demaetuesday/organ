@@ -10,6 +10,8 @@ from graphs import *
 #score = converter.parse('scores/monophony_test.xml')
 #score = converter.parse('scores/triad_test.xml')
 score = converter.parse('scores/hyfrydol.xml')
+#score = converter.parse('scores/lobe_den_herren.xml')
+#score = converter.parse('scores/from_lyra_davidica.xml')
 
 # print "Parts:"
 # for p in score.parts:
@@ -19,7 +21,7 @@ score = converter.parse('scores/hyfrydol.xml')
 
 rh = score.parts[0]
 
-startSS = ScoreStateGenerator(rh, 128).generateScoreStates()
+startSS = ScoreStateGenerator(rh, 4).generateScoreStates()
 
 # currentSS = startSS
 # counter = 0
@@ -36,10 +38,11 @@ allFSs = FingeringStateGenerator(startSS).generateFingeringStates()
 #     print fs.toString()
 #     print
 
-toDotGraph(allFSs, expanduser('~') + '/Desktop/graph.txt')
+pathFSs = getShortestPath(allFSs[0], allFSs[-1], allFSs)
 
-fingering = getShortestPath(allFSs[0], allFSs[-1], allFSs)
-
-for fs in fingering:
+for fs in pathFSs:
     print fs.toString()
     print
+
+toDotGraph(allFSs, pathFSs, expanduser('~') + '/Desktop/graph.txt')
+

@@ -1,5 +1,4 @@
 from itertools import combinations
-from collections import defaultdict
 from model import *
 from parameters import *
 
@@ -46,7 +45,13 @@ class FingeringStateGenerator(object):
                 # to the next.
                 assignments = list(combinations(availableFingers, len(pitches)))
 
-                self.removeInvalidAssignmentsToHeldPitches(assignments, pitches, heldPitches, prevFS)
+                if len(heldPitches) > 0:
+                    self.removeInvalidAssignmentsToHeldPitches(
+                        pitches, heldPitches, assignments, prevPitches, prevFS)
+
+                if len(prevPitches) > 0:
+                    self.removeInvalidAssignmentsToSopranoAltoRepeatedNote(
+                        pitches, assignments, prevPitches, prevFS)
 
                 for a in assignments:
 
@@ -88,14 +93,30 @@ class FingeringStateGenerator(object):
 
         return self.allFSs
 
-    def removeInvalidAssignmentsToHeldPitches(self, assignments, pitches, heldPitches, prevFS):
+    def removeInvalidAssignmentsToHeldPitches(self, pitches, heldPitches, assignments, prevPitches, prevFS):
+
         toRemove = []
         for p in heldPitches:
             for a in assignments:
                 fingerAssignedToHeldPitch = a[pitches.index(p)]
                 fingerThatPressedHeldPitch = prevFS.getFingerByPitch(p)
-                if (fingerAssignedToHeldPitch != fingerThatPressedHeldPitch):
+                # The first condition (before the 'and') checks if this is not a case of an alto to
+                # soprano exchange; if it is, it does not remove the assignment in order to allow
+                # lifting of the note that normally would be held.
+                if (p != pitches[-1] and fingerAssignedToHeldPitch != fingerThatPressedHeldPitch):
                     toRemove.append(a)
+        for a in toRemove:
+            assignments.remove(a)
+
+    def removeInvalidAssignmentsToSopranoAltoRepeatedNote(
+            self, pitches, assignments, prevPitches, prevFS):
+
+        toRemove = []
+        for p in pitches:
+            if p == prevPitches[-1]:
+                for a in assignments:
+                    if a[pitches.index(p)] != prevFS.getFingerByPitch(p):
+                        toRemove.append(a)
         for a in toRemove:
             assignments.remove(a)
 
