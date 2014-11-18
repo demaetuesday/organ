@@ -19,24 +19,17 @@ class FingeringStateGenerator(object):
         while self.currentSS is not None:
 
             currPitches = self.currentSS.getPitches()
+            if self.prevSS is not None:
+                prevPitches = self.prevSS.getPitches()
+            else:
+                prevPitches = []
 
             usedAssignmentsMapToFS = dict()
             fingeringStatesForCurrentSS = []
 
             for prevFS in self.prevFSs:
 
-                availableFingers = [1, 2, 3, 4, 5]
-                for f in prevFS.fingers:
-                    availableFingers.remove(f)
-                if self.prevSS is None:
-                    prevPitches = []
-                else:
-                    prevPitches = self.prevSS.getPitches()
-                for prevP in prevPitches:
-                    if prevP in currPitches:
-                        assert prevFS.getFingerByPitch(prevP) not in availableFingers
-                        availableFingers.append(prevFS.getFingerByPitch(prevP))
-                availableFingers.sort()
+                availableFingers = self.getUnusedFingersInPrevFS(prevPitches, prevFS, currPitches)
 
                 # Currently, we don't support the case of crossed fingers in an assignment for a
                 # single score state, and thus all candidate assignments generated are in finger
@@ -45,29 +38,16 @@ class FingeringStateGenerator(object):
                 assignments = list(combinations(availableFingers, len(currPitches)))
 
                 heldPitches = self.currentSS.getHeldPitches()
-                for p in currPitches:
-                    if self.isSopranoToAltoExchange(p, currPitches, prevPitches):
-                        if p not in heldPitches:
-                            heldPitches.append(p)
-                            heldPitches.sort()
-                    if self.isAltoToSopranoExchange(p, currPitches, prevPitches):
-                        if p in heldPitches:
-                            heldPitches.remove(p)
+                self.adjustHeldPitchesForVoicing(prevPitches, heldPitches, currPitches)
 
-                toRemove = []
-                for a in assignments:
-                    if self.isInvalidAssignmentForHeldPitch(currPitches, heldPitches, a, prevFS):
-                        toRemove.append(a)
-                for a in toRemove:
-                    assignments.remove(a)
+                self.removeInvalidAssignments(prevFS, heldPitches, currPitches, assignments)
 
                 for a in assignments:
 
                     if prevFS.scoreState is None:
                         horizCost = 0.0
                     else:
-                        horizCost = self.getHorizCost(prevFS.scoreState.getPitches(), prevFS.fingers,
-                                                      currPitches, a)
+                        horizCost = self.getHorizCost(prevPitches, prevFS.fingers, currPitches, a)
                     if horizCost ==  float('inf'):
                         continue
 
@@ -101,14 +81,27 @@ class FingeringStateGenerator(object):
 
         return self.allFSs
 
-    def isInvalidAssignmentForHeldPitch(self, pitches, heldPitches, assignment, prevFS):
+    def getUnusedFingersInPrevFS(self, prevPitches, prevFS, currPitches):
 
-        for p in heldPitches:
-            fingerAssignedToHeldPitch = assignment[pitches.index(p)]
-            fingerThatPressedHeldPitch = prevFS.getFingerByPitch(p)
-            if (fingerAssignedToHeldPitch != fingerThatPressedHeldPitch):
-                return True
-        return False
+        availableFingers = [1, 2, 3, 4, 5]
+        for f in prevFS.fingers:
+            availableFingers.remove(f)
+        for prevP in prevPitches:
+            if prevP in currPitches:
+                assert prevFS.getFingerByPitch(prevP) not in availableFingers
+                availableFingers.append(prevFS.getFingerByPitch(prevP))
+        return sorted(availableFingers)
+
+    def adjustHeldPitchesForVoicing(self, prevPitches, heldPitches, currPitches):
+
+        for p in currPitches:
+            if self.isSopranoToAltoExchange(p, currPitches, prevPitches):
+                if p not in heldPitches:
+                    heldPitches.append(p)
+                    heldPitches.sort()
+            if self.isAltoToSopranoExchange(p, currPitches, prevPitches):
+                if p in heldPitches:
+                    heldPitches.remove(p)
 
     def isSopranoToAltoExchange(self, pitch, currPitches, prevPitches):
 
@@ -125,6 +118,26 @@ class FingeringStateGenerator(object):
         # if this pitch != the soprano pitch in the previous SS, and
         # this pitch == the soprano pitch in the current SS
         return pitch != prevPitches[-1] and pitch == currPitches[-1]
+
+    def removeInvalidAssignments(self, prevFS, heldPitches, currPitches, assignments):
+
+        toRemove = set()
+        for a in assignments:
+
+            if self.isInvalidAssignmentForHeldPitch(prevFS, heldPitches, currPitches, a):
+                toRemove.add(a)
+
+        for a in toRemove:
+            assignments.remove(a)
+
+    def isInvalidAssignmentForHeldPitch(self, prevFS, heldPitches, currPitches, assignment):
+
+        for p in heldPitches:
+            fingerAssignedToHeldPitch = assignment[currPitches.index(p)]
+            fingerThatPressedHeldPitch = prevFS.getFingerByPitch(p)
+            if fingerAssignedToHeldPitch != fingerThatPressedHeldPitch:
+                return True
+        return False
 
     def getVertCost(self, pitches, assignment):
 

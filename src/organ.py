@@ -9,8 +9,8 @@ from graphs import *
 #score = converter.parse('scores/rest_test.xml')
 #score = converter.parse('scores/monophony_test.xml')
 #score = converter.parse('scores/triad_test.xml')
-#score = converter.parse('scores/hyfrydol.xml')
-score = converter.parse('scores/lobe_den_herren.xml')
+score = converter.parse('scores/hyfrydol.xml')
+#score = converter.parse('scores/lobe_den_herren.xml')
 #score = converter.parse('scores/from_lyra_davidica.xml')
 
 # print "Parts:"
