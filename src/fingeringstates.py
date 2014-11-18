@@ -18,8 +18,7 @@ class FingeringStateGenerator(object):
 
         while self.currentSS is not None:
 
-            pitches = self.currentSS.getPitches()
-            heldPitches = self.currentSS.getHeldPitches()
+            currPitches = self.currentSS.getPitches()
 
             usedAssignmentsMapToFS = dict()
             fingeringStatesForCurrentSS = []
@@ -34,7 +33,7 @@ class FingeringStateGenerator(object):
                 else:
                     prevPitches = self.prevSS.getPitches()
                 for prevP in prevPitches:
-                    if prevP in pitches:
+                    if prevP in currPitches:
                         assert prevFS.getFingerByPitch(prevP) not in availableFingers
                         availableFingers.append(prevFS.getFingerByPitch(prevP))
                 availableFingers.sort()
@@ -43,15 +42,24 @@ class FingeringStateGenerator(object):
                 # single score state, and thus all candidate assignments generated are in finger
                 # order. (We of course support the case of crossed fingers from one score state
                 # to the next.
-                assignments = list(combinations(availableFingers, len(pitches)))
+                assignments = list(combinations(availableFingers, len(currPitches)))
 
-                if len(heldPitches) > 0:
-                    self.removeInvalidAssignmentsToHeldPitches(
-                        pitches, heldPitches, assignments, prevPitches, prevFS)
+                heldPitches = self.currentSS.getHeldPitches()
+                for p in currPitches:
+                    if self.isSopranoToAltoExchange(p, currPitches, prevPitches):
+                        if p not in heldPitches:
+                            heldPitches.append(p)
+                            heldPitches.sort()
+                    if self.isAltoToSopranoExchange(p, currPitches, prevPitches):
+                        if p in heldPitches:
+                            heldPitches.remove(p)
 
-                if len(prevPitches) > 0:
-                    self.removeInvalidAssignmentsToSopranoAltoRepeatedNote(
-                        pitches, assignments, prevPitches, prevFS)
+                toRemove = []
+                for a in assignments:
+                    if self.isInvalidAssignmentForHeldPitch(currPitches, heldPitches, a, prevFS):
+                        toRemove.append(a)
+                for a in toRemove:
+                    assignments.remove(a)
 
                 for a in assignments:
 
@@ -59,7 +67,7 @@ class FingeringStateGenerator(object):
                         horizCost = 0.0
                     else:
                         horizCost = self.getHorizCost(prevFS.scoreState.getPitches(), prevFS.fingers,
-                                                      pitches, a)
+                                                      currPitches, a)
                     if horizCost ==  float('inf'):
                         continue
 
@@ -67,7 +75,7 @@ class FingeringStateGenerator(object):
                         fs = usedAssignmentsMapToFS[a]
                         child = (fs, horizCost)
                     else:
-                        vertCost = self.getVertCost(pitches, a)
+                        vertCost = self.getVertCost(currPitches, a)
 
                         if vertCost == float('inf'):
                             continue
@@ -93,32 +101,30 @@ class FingeringStateGenerator(object):
 
         return self.allFSs
 
-    def removeInvalidAssignmentsToHeldPitches(self, pitches, heldPitches, assignments, prevPitches, prevFS):
+    def isInvalidAssignmentForHeldPitch(self, pitches, heldPitches, assignment, prevFS):
 
-        toRemove = []
         for p in heldPitches:
-            for a in assignments:
-                fingerAssignedToHeldPitch = a[pitches.index(p)]
-                fingerThatPressedHeldPitch = prevFS.getFingerByPitch(p)
-                # The first condition (before the 'and') checks if this is not a case of an alto to
-                # soprano exchange; if it is, it does not remove the assignment in order to allow
-                # lifting of the note that normally would be held.
-                if (p != pitches[-1] and fingerAssignedToHeldPitch != fingerThatPressedHeldPitch):
-                    toRemove.append(a)
-        for a in toRemove:
-            assignments.remove(a)
+            fingerAssignedToHeldPitch = assignment[pitches.index(p)]
+            fingerThatPressedHeldPitch = prevFS.getFingerByPitch(p)
+            if (fingerAssignedToHeldPitch != fingerThatPressedHeldPitch):
+                return True
+        return False
 
-    def removeInvalidAssignmentsToSopranoAltoRepeatedNote(
-            self, pitches, assignments, prevPitches, prevFS):
+    def isSopranoToAltoExchange(self, pitch, currPitches, prevPitches):
 
-        toRemove = []
-        for p in pitches:
-            if p == prevPitches[-1]:
-                for a in assignments:
-                    if a[pitches.index(p)] != prevFS.getFingerByPitch(p):
-                        toRemove.append(a)
-        for a in toRemove:
-            assignments.remove(a)
+        if len(prevPitches) == 0:
+            return False
+        # if this pitch == the soprano pitch in the previous SS, and
+        # this pitch != the soprano pitch in the current SS
+        return pitch == prevPitches[-1] and pitch != currPitches[-1]
+
+    def isAltoToSopranoExchange(self, pitch, currPitches, prevPitches):
+
+        if len(prevPitches) == 0:
+            return False
+        # if this pitch != the soprano pitch in the previous SS, and
+        # this pitch == the soprano pitch in the current SS
+        return pitch != prevPitches[-1] and pitch == currPitches[-1]
 
     def getVertCost(self, pitches, assignment):
 

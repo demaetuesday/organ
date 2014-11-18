@@ -36,8 +36,8 @@ def getNodeNameString(fingeringState):
     if fingeringState.scoreState is not None:
         scoreStateString = fingeringState.scoreState.toString()
 
-    result = '\"ID: ' + str(fingeringState.id) + '\\n'
-    result += scoreStateString + '\\n'
+    result = '"' + scoreStateString + '\\n'
     result += str(fingeringState.fingers) + '\\n'
-    result += 'Vertical cost: ' + str(fingeringState.vertCost) + '\"'
+    result += 'Vertical cost: ' + str(fingeringState.vertCost) + '\\n'
+    result += 'ID: ' + str(fingeringState.id) + '"'
     return result

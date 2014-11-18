@@ -27,7 +27,10 @@ class ScoreState(object):
 
         result = ''
         for ssN in self.scoreStateNotes:
-            result += str(ssN.note.pitch) + ' ' + str(ssN.onset) + ', '
+            heldString = ''
+            if not ssN.onset:
+                heldString = ' (Held)'
+            result += str(ssN.note.pitch) + heldString + ', '
         return result
 
 class ScoreStateNote(object):
@@ -60,7 +63,7 @@ class FingeringState(object):
         if self.scoreState is not None:
             scoreStateString = self.scoreState.toString()
 
-        result = 'FS: ' + str(self.id) + '\n'
+        result = 'FS ' + str(self.id) + ':\n'
         result += scoreStateString + '\n'
         result += str(self.fingers) + '\n'
         result += 'Vertical cost: ' + str(self.vertCost)
