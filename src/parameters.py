@@ -32,3 +32,5 @@ pairSpanCost[(3, 5)][-2] = 16 # This cost may be too high.
 pairSpanCost[(4, 5)][0] = 4 # This cost may be too high.
 pairSpanCost[(4, 5)][-1] = 8 # This cost may be too high.
 pairSpanCost[(4, 5)][-2] = 12 # This cost may be too high.
+
+substitutionCost = 3

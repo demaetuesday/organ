@@ -44,7 +44,7 @@ class FingeringState(object):
 
     idCounter = 0
 
-    def __init__(self, scoreState, fingers, vertCost):
+    def __init__(self, scoreState, fingers, vertCost, substitution):
 
         self.id = FingeringState.idCounter
         FingeringState.idCounter += 1
@@ -52,6 +52,7 @@ class FingeringState(object):
         self.scoreState = scoreState
         self.fingers = fingers
         self.vertCost = vertCost
+        self.substitution = substitution
         self.children = []
 
     def getFingerByPitch(self, pitch):

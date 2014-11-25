@@ -9,7 +9,7 @@ class FingeringStateGenerator(object):
         self.currentSS = startSS
         self.prevSS = None
 
-        self.startFS = FingeringState(None, (), 0)
+        self.startFS = FingeringState(None, (), 0, False)
         self.prevFSs = [self.startFS]
 
         self.allFSs = [self.startFS]
@@ -18,68 +18,90 @@ class FingeringStateGenerator(object):
 
         while self.currentSS is not None:
 
-            currPitches = self.currentSS.getPitches()
+            fss1ForCurrentSS, usedAssignmentsToCurrFSs = self._generateFingeringStates(
+                self.prevFSs, self.currentSS, None, False)
+
+            fss2ForCurrentSS = []
+
             if self.prevSS is not None:
-                prevPitches = self.prevSS.getPitches()
-            else:
-                prevPitches = []
 
-            usedAssignmentsMapToFS = dict()
-            fingeringStatesForCurrentSS = []
+                fssForSubstitution = self._generateFingeringStates(
+                    self.prevFSs, self.prevSS, None, True)[0]
 
-            for prevFS in self.prevFSs:
+                fss2ForCurrentSS = self._generateFingeringStates(
+                    fssForSubstitution, self.currentSS, usedAssignmentsToCurrFSs, False)[0]
 
-                availableFingers = self.getUnusedFingersInPrevFS(prevPitches, prevFS, currPitches)
-
-                # Currently, we don't support the case of crossed fingers in an assignment for a
-                # single score state, and thus all candidate assignments generated are in finger
-                # order. (We of course support the case of crossed fingers from one score state
-                # to the next.
-                assignments = list(combinations(availableFingers, len(currPitches)))
-
-                heldPitches = self.currentSS.getHeldPitches()
-                self.adjustHeldPitchesForVoicing(prevPitches, heldPitches, currPitches)
-
-                self.removeInvalidAssignments(prevFS, heldPitches, currPitches, assignments)
-
-                for a in assignments:
-
-                    if prevFS.scoreState is None:
-                        horizCost = 0.0
-                    else:
-                        horizCost = self.getHorizCost(prevPitches, prevFS.fingers, currPitches, a)
-                    if horizCost ==  float('inf'):
-                        continue
-
-                    if a in usedAssignmentsMapToFS:
-                        fs = usedAssignmentsMapToFS[a]
-                        child = (fs, horizCost)
-                    else:
-                        vertCost = self.getVertCost(currPitches, a)
-
-                        if vertCost == float('inf'):
-                            continue
-
-                        fs = FingeringState(self.currentSS, a, vertCost)
-                        child = (fs, horizCost)
-
-                        usedAssignmentsMapToFS[a] = fs
-                        fingeringStatesForCurrentSS.append(fs)
-                        self.allFSs.append(fs)
-
-                    prevFS.children.append(child)
-
-            self.prevFSs = fingeringStatesForCurrentSS
+            self.prevFSs = fss1ForCurrentSS + fss2ForCurrentSS
 
             self.prevSS = self.currentSS
             self.currentSS = self.currentSS.next
 
-        goalFS = FingeringState(None, (), 0)
+        goalFS = FingeringState(None, (), 0, False)
         for prevFS in self.prevFSs:
             prevFS.children.append((goalFS, 0))
         self.allFSs.append(goalFS)
 
         return self.allFSs
+
+    def _generateFingeringStates(self, prevFSs, currentSS, usedAssignmentsToFS, substitution):
+
+        currPitches = currentSS.getPitches()
+        if self.prevSS is not None:
+            prevPitches = self.prevSS.getPitches()
+        else:
+            prevPitches = []
+
+        if usedAssignmentsToFS is None:
+            usedAssignmentsToFS = dict()
+
+        fssForCurrentSS = []
+        for prevFS in prevFSs:
+
+            availableFingers = self.getUnusedFingersInPrevFS(prevPitches, prevFS, currPitches)
+
+            # Currently, we don't support the case of crossed fingers in an assignment for a
+            # single score state, and thus all candidate assignments generated are in finger
+            # order. (We of course support the case of crossed fingers from one score state
+            # to the next.
+            assignments = list(combinations(availableFingers, len(currPitches)))
+
+            heldPitches = currentSS.getHeldPitches()
+            if not substitution:
+                self.adjustHeldPitchesForVoicing(prevPitches, heldPitches, currPitches)
+
+            self.removeInvalidAssignments(
+                prevFS, heldPitches, currPitches, assignments, substitution)
+
+            for a in assignments:
+
+                if prevFS.scoreState is None:
+                    horizCost = 0.0
+                else:
+                    horizCost = self.getHorizCost(prevPitches, prevFS.fingers, currPitches, a)
+                if horizCost == float('inf'):
+                    continue
+                if substitution:
+                    horizCost += substitutionCost
+
+                if a in usedAssignmentsToFS:
+                    fs = usedAssignmentsToFS[a]
+                    child = (fs, horizCost)
+                else:
+                    vertCost = self.getVertCost(currPitches, a)
+
+                    if vertCost == float('inf'):
+                        continue
+
+                    fs = FingeringState(currentSS, a, vertCost, substitution)
+                    child = (fs, horizCost)
+
+                    usedAssignmentsToFS[a] = fs
+                    fssForCurrentSS.append(fs)
+                    self.allFSs.append(fs)
+
+                prevFS.children.append(child)
+
+        return fssForCurrentSS, usedAssignmentsToFS
 
     def getUnusedFingersInPrevFS(self, prevPitches, prevFS, currPitches):
 
@@ -119,12 +141,14 @@ class FingeringStateGenerator(object):
         # this pitch == the soprano pitch in the current SS
         return pitch != prevPitches[-1] and pitch == currPitches[-1]
 
-    def removeInvalidAssignments(self, prevFS, heldPitches, currPitches, assignments):
+    def removeInvalidAssignments(self, prevFS, heldPitches, currPitches, assignments, substitution):
 
         toRemove = set()
         for a in assignments:
 
-            if self.isInvalidAssignmentForHeldPitch(prevFS, heldPitches, currPitches, a):
+            if (not substitution and
+                self.isInvalidAssignmentForHeldPitch(prevFS, heldPitches, currPitches, a)):
+
                 toRemove.add(a)
 
         for a in toRemove:

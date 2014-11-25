@@ -12,16 +12,18 @@ from graphs import *
 score = converter.parse('scores/hyfrydol.xml')
 #score = converter.parse('scores/lobe_den_herren.xml')
 #score = converter.parse('scores/from_lyra_davidica.xml')
+#score = converter.parse('scores/third_test.xml')
 
-# print "Parts:"
-# for p in score.parts:
-#     print p
+print "Parts:"
+for p in score.parts:
+     print p
 
 #score.show()
 
 rh = score.parts[0]
+print rh
 
-startSS = ScoreStateGenerator(rh, 1, 3).generateScoreStates()
+startSS = ScoreStateGenerator(rh, 1, 4).generateScoreStates()
 
 currentSS = startSS
 counter = 0
