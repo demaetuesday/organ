@@ -44,19 +44,19 @@ class FingeringState(object):
 
     idCounter = 0
 
-    def __init__(self, scoreState, fingers, vertCost, substitution):
+    def __init__(self, scoreState, assignment, vertCost, substitution):
 
         self.id = FingeringState.idCounter
         FingeringState.idCounter += 1
 
         self.scoreState = scoreState
-        self.fingers = fingers
+        self.assignment = assignment
         self.vertCost = vertCost
         self.substitution = substitution
         self.children = []
 
     def getFingerByPitch(self, pitch):
-        return self.fingers[self.scoreState.getPitches().index(pitch)]
+        return self.assignment[self.scoreState.getPitches().index(pitch)]
 
     def toString(self):
 
@@ -66,6 +66,6 @@ class FingeringState(object):
 
         result = 'FS ' + str(self.id) + ':\n'
         result += scoreStateString + '\n'
-        result += str(self.fingers) + '\n'
+        result += str(self.assignment) + '\n'
         result += 'Vertical cost: ' + str(self.vertCost)
         return result

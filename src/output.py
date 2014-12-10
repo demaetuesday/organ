@@ -1,7 +1,7 @@
 def toDotGraph(allFSs, pathFSs, filename):
 
     result = 'digraph g {\n'
-    result += 'rankdir=LR ranksep=8.0;\n'
+    result += 'rankdir=LR ranksep=5.0;\n'
     result += 'node [style=filled fillcolor=white];\n'
 
     for fs in allFSs:
@@ -19,7 +19,18 @@ def toDotGraph(allFSs, pathFSs, filename):
             result += getNodeNameString(fs)
             result += " -> "
             result += getNodeNameString(child[0])
-            result += ' [label="' + "{0:.2f}".format(child[1]) + '"'
+
+            label = ' [label="'
+            label += str(fs.assignment)
+            if fs.substitution:
+                label += 'S'
+            label += ' ' + "{0:.2f}".format(child[1]) + ' '
+            label += str(child[0].assignment)
+            if child[0].substitution:
+                label += 'S'
+            label += '"'
+
+            result += label
             if fs == pathFSs[pathCounter] and child[0] == pathFSs[pathCounter + 1]:
                 result += ' penwidth=5 color=palegreen]'
                 pathCounter += 1
@@ -40,7 +51,7 @@ def getNodeNameString(fingeringState):
         scoreStateString = fingeringState.scoreState.toString()
 
     result = '"' + scoreStateString + '\\n'
-    result += str(fingeringState.fingers) + '\\n'
+    result += str(fingeringState.assignment) + '\\n'
     result += 'Vertical cost: ' + str(fingeringState.vertCost) + '\\n'
     result += 'ID: ' + str(fingeringState.id) + '"'
     return result
