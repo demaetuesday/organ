@@ -3,19 +3,19 @@ from model import *
 
 class ScoreStateGenerator(object):
 
-    def __init__(self, score, startMeasure, endMeasure):
+    def __init__(self, part, startMeasure, endMeasure):
 
-        self.score = score
+        self.part = part
         self.startMeasure = startMeasure
         self.endMeasure = endMeasure
 
     def generateScoreStates(self):
 
-        measure1 = self.score.measure(1)
+        measure1 = self.part.measure(1)
         barDuration = measure1.barDuration.quarterLength
 
         RHNotes = stream.Stream()
-        for e in self.score.flat.elements:
+        for e in self.part.flat.elements:
             if isinstance(e, note.Note):
                 RHNotes.append(e)
 

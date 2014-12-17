@@ -1,4 +1,3 @@
-from itertools import combinations
 from model import *
 from cost import *
 
@@ -163,4 +162,3 @@ class FingeringStateGenerator(object):
             if fingerAssignedToHeldPitch != fingerThatPressedHeldPitch:
                 return True
         return False
-
