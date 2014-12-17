@@ -9,9 +9,9 @@ from os.path import expanduser
 fg = FingeringGenerator()
 
 # fingering = fg.generateFingering('scores/hyfrydol.xml', 1, 4)
-fingering = fg.generateFingering('scores/hyfrydol.xml', 1, 8)
+# fingering = fg.generateFingering('scores/hyfrydol.xml', 1, 8)
 # fingering = fg.generateFingering('scores/lobe_den_herren.xml', 1, 6)
-# fingering = fg.generateFingering('scores/from_lyra_davidica.xml', 1, 2)
+fingering = fg.generateFingering('scores/from_lyra_davidica.xml', 1, 2)
 # fingering = fg.generateFingering('scores/from_lyra_davidica.xml', 15, 16)
 
 fg.writeDotGraph(expanduser('~') + '/Desktop/graph.txt')
@@ -22,9 +22,9 @@ print fg.toString()
 print
 
 # refFingeringPath = 'references/hyfrydol1-4.txt'
-refFingeringPath = 'references/hyfrydol1-8.txt'
+# refFingeringPath = 'references/hyfrydol1-8.txt'
 # refFingeringPath = 'references/lobe_den_herren1-6.txt'
-# refFingeringPath = 'references/from_lyra_davidica1-2.txt'
+refFingeringPath = 'references/from_lyra_davidica1-2.txt'
 # refFingeringPath = 'references/from_lyra_davidica15-16.txt'
 
 ev = Evaluator()

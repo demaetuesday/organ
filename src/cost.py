@@ -81,20 +81,15 @@ def getHorizCost(prevPitches, prevAssignment, currPitches, currAssignment):
 
         if span not in pairSpanCost[assignment]:
             pairCost = float('inf')
-        elif isInvalidAssignmentWithBlackKey([mI, mIPlus1], assignment, span):
-            pairCost = float('inf')
+        # elif isInvalidAssignmentWithBlackKey([mI, mIPlus1], assignment, span):
+        #     pairCost = float('inf')
         else:
             pairCost = pairSpanCost[assignment][span]
 
         totalCost += pairCost
 
-        for prevPitch in prevPitches:
-            for currPitch in currPitches:
-                if prevPitch == currPitch:
-                    if (prevAssignment[prevPitches.index(prevPitch)] !=
-                        currAssignment[currPitches.index(currPitch)]):
-
-                        totalCost += fingerChangeCost
+        if isFingerChangeOnSameNote(prevPitches, prevAssignment, currPitches, currAssignment):
+            totalCost += fingerChangeCost
 
     return totalCost / (len(membersOfHorizPitchPairs) - 1)
 
@@ -103,3 +98,13 @@ def isInvalidAssignmentWithBlackKey(pitches, assignment, span):
     if span > 0 or 1 in assignment:
         return False
     return isBlackKey(pitches[0])
+
+def isFingerChangeOnSameNote(prevPitches, prevAssignment, currPitches, currAssignment):
+
+    for prevPitch in prevPitches:
+        for currPitch in currPitches:
+            if prevPitch == currPitch:
+                if (prevAssignment[prevPitches.index(prevPitch)] !=
+                        currAssignment[currPitches.index(currPitch)]):
+                    return True
+    return False

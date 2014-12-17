@@ -23,15 +23,15 @@ pairSpanCost[(2, 3)][0] = 4
 pairSpanCost[(2, 4)][0] = 8
 pairSpanCost[(2, 5)][1] = 10
 pairSpanCost[(2, 5)][0] = 14
-pairSpanCost[(3, 4)][0] = 4 # This cost may be too high.
-pairSpanCost[(3, 4)][-1] = 8 # This cost may be too high.
-pairSpanCost[(3, 4)][-2] = 12 # This cost may be too high.
-pairSpanCost[(3, 5)][0] = 8 # This cost may be too high.
-pairSpanCost[(3, 5)][-1] = 12 # This cost may be too high.
-pairSpanCost[(3, 5)][-2] = 16 # This cost may be too high.
-pairSpanCost[(4, 5)][0] = 4 # This cost may be too high.
-pairSpanCost[(4, 5)][-1] = 8 # This cost may be too high.
-pairSpanCost[(4, 5)][-2] = 12 # This cost may be too high.
+pairSpanCost[(3, 4)][0] = 4
+pairSpanCost[(3, 4)][-1] = 8
+pairSpanCost[(3, 4)][-2] = 12
+pairSpanCost[(3, 5)][0] = 8
+pairSpanCost[(3, 5)][-1] = 12
+pairSpanCost[(3, 5)][-2] = 16
+pairSpanCost[(4, 5)][0] = 4
+pairSpanCost[(4, 5)][-1] = 8
+pairSpanCost[(4, 5)][-2] = 12
 
 fingerChangeCost = 1
 
